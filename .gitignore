@@ -1,15 +1,14 @@
-# Reference folder
-Hack2SkillsHackathon/
-
 # Python
 __pycache__/
 *.py[cod]
 *$py.class
+
+# Env
 .env
+.env.*
 venv/
 .venv/
 env/
-.env/
 
 # OS
 .DS_Store

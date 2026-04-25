@@ -1,31 +1,40 @@
+version: "3.9"
+
 services:
-  backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+
+  api:
+    build: ./backend
+    restart: unless-stopped
     ports:
       - "8000:8000"
-    volumes:
-      - ./backend/chroma_data:/app/chroma_data
-      - ./backend/reddit_data:/app/reddit_data
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - CHROMA_PATH=/app/chroma_data
     env_file:
       - .env
-    restart: always
+    volumes:
+      - chroma_data:/app/chroma_data
+    depends_on:
+      - redis
 
   frontend:
-    build:
-      context: ./frontend/foundrai-next
-      dockerfile: Dockerfile
-      args:
-        - NEXT_PUBLIC_API_URL=http://localhost:8000
+    build: ./frontend/foundrai-next
+    restart: unless-stopped
     ports:
       - "3000:3000"
     environment:
       - NEXT_PUBLIC_API_URL=http://localhost:8000
     depends_on:
-      - backend
-    restart: always
+      - api
 
-networks:
-  default:
-    name: foundrai-network
+volumes:
+  redis_data:
+  chroma_data:

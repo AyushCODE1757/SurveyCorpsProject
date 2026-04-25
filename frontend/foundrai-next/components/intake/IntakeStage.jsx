@@ -377,6 +377,7 @@ import { useSimulation } from "@/hooks/useSimulation";
 import { FORM_OPTIONS, buildPromptFromForm } from "@/lib/utils";
 import FormField from "./FormField";
 import PromptPreview from "./PromptPreview";
+import FileUpload from "./FileUpload";
 
 const FIELDS = [
   {
@@ -533,6 +534,7 @@ export default function IntakeStage() {
           <div className="space-y-4">
             <PromptPreview prompt={prompt} onEdit={setIdea} />
 
+            <FileUpload />
             {/* Fixed Button: Using native Tailwind gradient classes instead of custom config */}
             <Button
               onClick={handleLaunch}
