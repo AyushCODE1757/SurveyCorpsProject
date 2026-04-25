@@ -55,6 +55,17 @@ async def run_simulation_stream(idea: str, fast: bool = False):
         "grounded_by": ceo_result.get("tool_name"),
     })
 
+    if ceo_result.get("workforce_plan"):
+        yield sse({
+            "type": "workforce_plan",
+            "roles": ceo_result["workforce_plan"]
+        })
+    if ceo_result.get("timeline"):
+        yield sse({
+            "type": "timeline",
+            "milestones": ceo_result["timeline"]
+        })
+
     # ── PHASE 2: PARALLEL CRITIQUE + LEGAL SCAN ──────────────────────────────
     yield sse({"type": "phase_change", "phase": 2, "label": "Parallel Critique + Legal Scan"})
 
