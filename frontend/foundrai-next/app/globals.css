@@ -1,0 +1,221 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Fira+Code:wght@300;400;500&display=swap");
+@import "tailwindcss";
+
+/* ── Tailwind v4: ALL custom tokens go here in @theme ── */
+@theme {
+  --font-sans: "Inter", sans-serif;
+  --font-fira: "Fira Code", monospace;
+
+  /* Gold */
+  --color-gold-300: #fde68a;
+  --color-gold-400: #fbbf24;
+  --color-gold-500: #f59e0b;
+  --color-gold-600: #d97706;
+
+  /* Obsidian */
+  --color-obsidian-900: #111111;
+  --color-obsidian-950: #0c0c0c;
+
+  /* Agent colors */
+  --color-agent-ceo: #818cf8;
+  --color-agent-dev: #60a5fa;
+  --color-agent-finance: #34d399;
+  --color-agent-marketing: #fbbf24;
+  --color-agent-risk: #f87171;
+  --color-agent-legal: #a78bfa;
+  --color-agent-synthesis: #67e8f9;
+
+  /* Shadows */
+  --shadow-gold-sm:
+    0 0 0 1px rgba(234, 179, 8, 0.25), 0 2px 8px rgba(234, 179, 8, 0.08);
+  --shadow-gold-md:
+    0 0 0 1px rgba(234, 179, 8, 0.35), 0 4px 20px rgba(234, 179, 8, 0.12);
+  --shadow-gold-lg:
+    0 0 0 1px rgba(234, 179, 8, 0.45), 0 8px 32px rgba(234, 179, 8, 0.18);
+
+  /* Animations */
+  --animate-pulse-dot: pulse-dot 1.8s ease-in-out infinite;
+  --animate-fade-in-up: fade-in-up 0.45s ease forwards;
+  --animate-fade-in: fade-in 0.35s ease forwards;
+  --animate-scale-up: scale-up 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  --animate-ticker: ticker 40s linear infinite;
+  --animate-gold-pulse: gold-pulse 2s ease-in-out infinite;
+  --animate-shimmer: shimmer 2s infinite;
+  --animate-spin-slow: spin 10s linear infinite;
+
+  /* Keyframes */
+  @keyframes pulse-dot {
+    0%,
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.3;
+      transform: scale(0.65);
+    }
+  }
+  @keyframes fade-in-up {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  @keyframes scale-up {
+    from {
+      opacity: 0;
+      transform: scale(0.9);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+  @keyframes shimmer {
+    0% {
+      background-position: 200% 0;
+    }
+    100% {
+      background-position: -200% 0;
+    }
+  }
+  @keyframes ticker {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-50%);
+    }
+  }
+  @keyframes gold-pulse {
+    0%,
+    100% {
+      box-shadow: 0 0 0 0 rgba(234, 179, 8, 0.4);
+    }
+    50% {
+      box-shadow: 0 0 0 6px rgba(234, 179, 8, 0);
+    }
+  }
+}
+
+/* ── Base styles ── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-family: "Inter", sans-serif;
+}
+
+body {
+  background: #111111;
+  color: #ede8dc;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+::selection {
+  background: rgba(234, 179, 8, 0.2);
+  color: #fef3c7;
+}
+
+::-webkit-scrollbar {
+  width: 3px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(234, 179, 8, 0.2);
+  border-radius: 2px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(234, 179, 8, 0.4);
+}
+
+/* ── Utility classes ── */
+.font-fira {
+  font-family: "Fira Code", monospace;
+}
+
+.glass {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.glass-gold {
+  background: rgba(234, 179, 8, 0.04);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(234, 179, 8, 0.15);
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.02) 25%,
+    rgba(234, 179, 8, 0.06) 50%,
+    rgba(255, 255, 255, 0.02) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+.data-label {
+  font-family: "Fira Code", monospace;
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.25);
+}
+
+.gold-gradient {
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+}
+
+.shadow-gold-sm {
+  box-shadow: var(--shadow-gold-sm);
+}
+.shadow-gold-md {
+  box-shadow: var(--shadow-gold-md);
+}
+.shadow-gold-lg {
+  box-shadow: var(--shadow-gold-lg);
+}
+
+/* Inline animation classes since v4 @theme generates these automatically */
+.animate-pulse-dot {
+  animation: pulse-dot 1.8s ease-in-out infinite;
+}
+.animate-fade-in-up {
+  animation: fade-in-up 0.45s ease forwards;
+}
+.animate-fade-in {
+  animation: fade-in 0.35s ease forwards;
+}
+.animate-scale-up {
+  animation: scale-up 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.animate-ticker {
+  animation: ticker 40s linear infinite;
+}
+.animate-gold-pulse {
+  animation: gold-pulse 2s ease-in-out infinite;
+}
+.animate-spin-slow {
+  animation: spin 10s linear infinite;
+}
