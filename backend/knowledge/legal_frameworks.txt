@@ -1,0 +1,13 @@
+# Legal Frameworks & Regulatory Compliance
+
+## Data Privacy (GDPR, CCPA, HIPAA)
+When handling user data, specifically PII (Personally Identifiable Information), startups must comply with GDPR (if operating in or serving EU citizens) and CCPA (in California). GDPR requires explicit consent for data collection, right to be forgotten, and data portability.
+For health startups, HIPAA compliance is mandatory in the US. It requires strict encryption (at rest and in transit), audit logs, and specific business associate agreements (BAAs) with all vendors.
+
+## Corporate Structure & Licensing
+Founders should typically incorporate as a Delaware C-Corp if they plan to raise venture capital, as it is the standard for US investors.
+Industry-specific licensing (e.g., FINRA/SEC for fintech, FDA for medtech) requires significant lead time. A startup operating without proper licenses risks cease-and-desist orders or heavy fines.
+
+## Intellectual Property (IP)
+Open-source license conflicts are a major risk. Using GPL or AGPL licensed code in a proprietary commercial backend can legally require the startup to open-source its entire codebase. Startups should stick to MIT, Apache 2.0, or BSD licenses when building closed-source products.
+Patent infringement (especially utility patents) can be a blocker. Freedom-to-Operate (FTO) searches are recommended before significant R&D spend.

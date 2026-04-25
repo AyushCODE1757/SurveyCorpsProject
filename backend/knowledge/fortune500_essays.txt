@@ -1,0 +1,25 @@
+# Essays and Advice from Fortune 500 Leaders and Top Founders
+
+## Steve Jobs (Apple) - Focus and Simplicity
+"People think focus means saying yes to the thing you've got to focus on. But that's not what it means at all. It means saying no to the hundred other good ideas that there are. You have to pick carefully. I'm actually as proud of the things we haven't done as the things I have done. Innovation is saying no to 1,000 things."
+"Simple can be harder than complex: You have to work hard to get your thinking clean to make it simple. But it's worth it in the end because once you get there, you can move mountains."
+
+## Jeff Bezos (Amazon) - Customer Obsession
+"There are many ways to center a business. You can be competitor focused, you can be product focused, you can be technology focused, you can be business model focused, and there are more. But in my view, obsessive customer focus is by far the most protective of Day 1 vitality."
+"We've had three big ideas at Amazon that we've stuck with for 18 years, and they're the reason we're successful: Put the customer first. Invent. And be patient."
+
+## Elon Musk (Tesla, SpaceX) - First Principles Thinking
+"I think it's important to reason from first principles rather than by analogy. The normal way we conduct our lives is we reason by analogy. [With analogy] we are doing this because it's like something else that was done, or it is like what other people are doing. [With first principles] you boil things down to the most fundamental truths... and then reason up from there."
+
+## Sam Altman (OpenAI, YC) - Scale and Ambition
+"It’s easier to start a hard startup than an easy startup. People want to be part of something that matters, and they want to work on something where they have a chance of succeeding. If you are doing a startup that is trying to build a new massive thing, you will attract the best people."
+"The most successful founders do not set out to create companies. They are on a mission to solve a problem that is closer to a religion, and to them, the company is just a vehicle."
+
+## Satya Nadella (Microsoft) - Empathy and Culture
+"Empathy is not a soft skill. It is the hardest skill we learn, to relate to the world, to relate to people who are different than us. In business, if we don't have empathy for our customers, we will not be able to build products that satisfy their unmet, unarticulated needs."
+
+## Brian Chesky (Airbnb) - Do Things That Don't Scale
+"In the early days of Airbnb, Paul Graham told us to 'do things that don't scale.' That meant flying to New York, meeting our hosts in person, renting a camera, and taking pictures of their apartments. It was completely unscalable, but it was exactly what we needed to do to understand what our users really wanted and to build a product they loved."
+
+## Mark Zuckerberg (Meta) - Move Fast and Break Things
+"The biggest risk is not taking any risk. In a world that is changing really quickly, the only strategy that is guaranteed to fail is not taking risks. Move fast and break things. Unless you are breaking stuff, you are not moving fast enough."
