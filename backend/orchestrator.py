@@ -89,10 +89,12 @@ async def run_simulation_stream(idea: str, fast: bool = False):
         for event in _emit_tool_events(c, 2): yield event
         yield sse({
             "type": "critique" if c["agent"] != "Legal" else "legal_result",
-            "agent": c["agent"], "phase": 2,
-            "content": c["content"], 
+            "agent": c["agent"],
+            "phase": 2,
+            "content": c["content"],
             "score": c.get("score", 5.0),
             "grounded_by": c.get("tool_name"),
+            "chart_data": c.get("chart_data", []),
         })
 
     if consensus_critiques:

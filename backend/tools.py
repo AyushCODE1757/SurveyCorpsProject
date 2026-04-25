@@ -115,20 +115,37 @@ def search_reddit_pain_points(keyword: str) -> str:
 
 @tool
 def get_google_trends(keyword: str) -> str:
+    """Get Google Trends data to validate market demand over the past 12 months."""
     try:
         from pytrends.request import TrendReq
+        import json
         pytrends = TrendReq(hl="en-US", tz=360, timeout=(5, 10))
         kw = " ".join(keyword.split()[:3])
         pytrends.build_payload([kw], timeframe="today 12-m")
         df = pytrends.interest_over_time()
-        if df.empty: return f"No trend data found for '{kw}'."
+        if df.empty:
+            return json.dumps({"error": f"No trend data found for '{kw}'", "chart_data": []})
+
+        # Build month-by-month chart data
+        chart_data = [
+            {"month": str(idx.strftime("%b %y")), "interest": int(val)}
+            for idx, val in df[kw].items()
+        ]
         avg_interest = int(df[kw].mean())
         peak         = int(df[kw].max())
         recent       = int(df[kw].iloc[-1])
-        trend_dir    = "📈 Growing" if df[kw].iloc[-1] > df[kw].iloc[0] else "📉 Declining"
-        return f"Keyword: '{kw}' | Trend: {trend_dir}\nAvg interest: {avg_interest} | Peak: {peak} | Last: {recent}"
+        trend_dir    = "Growing" if df[kw].iloc[-1] > df[kw].iloc[0] else "Declining"
+
+        return json.dumps({
+            "keyword": kw,
+            "trend": trend_dir,
+            "avg": avg_interest,
+            "peak": peak,
+            "recent": recent,
+            "chart_data": chart_data   # ← this is what the frontend will chart
+        })
     except Exception as e:
-        return f"[TOOL ERROR] PyTrends failed: {str(e)}"
+        return json.dumps({"error": str(e), "chart_data": []})
 
 
 # ── Developer Tool: GitHub Stack Validator ────────────────────────────────────

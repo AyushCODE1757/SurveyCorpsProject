@@ -209,25 +209,44 @@ def dev_critique(idea: str, proposal: str, fast: bool = False) -> dict:
 # ── PHASE 2: Finance Critique ─────────────────────────────────────────────────
 
 def finance_critique(idea: str, proposal: str, fast: bool = False) -> dict:
+    import json
     query       = " ".join(idea.split()[:3])
     tool_result = get_google_trends.invoke(query)
     snippet     = tool_result[:300]
 
+    # Parse the structured JSON from the tool
+    try:
+        trends_data = json.loads(tool_result)
+        chart_data  = trends_data.get("chart_data", [])
+        trend_text  = (
+            f"Keyword '{trends_data.get('keyword')}' is {trends_data.get('trend')}. "
+            f"Avg interest: {trends_data.get('avg')}/100, Peak: {trends_data.get('peak')}, "
+            f"Recent: {trends_data.get('recent')}."
+        )
+    except Exception:
+        chart_data = []
+        trend_text = tool_result  # fallback to raw string
+
     prompt = (
         f"You are the CFO reviewing this startup proposal for financial viability.\n"
         f"Startup idea: '{idea}'\nProposal: '{proposal}'\n\n"
-        f"[LIVE GOOGLE TRENDS DATA]\n{tool_result}\n\n"
-        "Using the trend data above, give a 2-3 sentence critique covering:\n"
+        f"[LIVE GOOGLE TRENDS DATA]\n{trend_text}\n\n"
+        "Using the trend data above, give a structured critique covering:\n"
         "- Whether market demand is growing or shrinking (cite the trend numbers)\n"
-        "- Estimated costs and a realistic revenue model\n"
-        "End with exactly: [SCORE: X/10]"
+        "- ROI projection: Year 1, Year 2, Year 3 with assumptions stated\n"
+        "- Burn rate estimate: monthly burn at each stage\n"
+        "- Break-even analysis: month number and revenue required\n"
+        "- Return on Investment table: investor perspective with realistic multiples\n"
+        "- TAM estimate and key unit economics (CAC, LTV)\n"
+        "End with exactly: [SCORE: X/10] as your explicit feasibility score (1-10) with reasoning."
     )
     raw    = call_ai(prompt, fast)
     result = _parse_critique(raw, "Finance")
     result.update({
-        "tool_name": "Google Trends (PyTrends)",
-        "tool_query": query,
+        "tool_name":           "Google Trends (PyTrends)",
+        "tool_query":          query,
         "tool_result_snippet": snippet,
+        "chart_data":          chart_data,   # ← NEW: passed to frontend
     })
     return result
 

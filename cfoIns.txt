@@ -1,0 +1,142 @@
+Now — The CFO Chart Implementation Plan (Exact Code for Your Repo)
+Here's exactly what to change across 3 files:
+1. backend/tools.py — Make get_google_trends return structured data
+Find the active get_google_trends function (around line 150+) and replace it:
+pythondef get_google_trends(keyword: str) -> str:
+    """Get Google Trends data to validate market demand over the past 12 months."""
+    try:
+        from pytrends.request import TrendReq
+        import json
+        pytrends = TrendReq(hl="en-US", tz=360, timeout=(5, 10))
+        kw = " ".join(keyword.split()[:3])
+        pytrends.build_payload([kw], timeframe="today 12-m")
+        df = pytrends.interest_over_time()
+        if df.empty:
+            return json.dumps({"error": f"No trend data found for '{kw}'", "chart_data": []})
+
+        # Build month-by-month chart data
+        chart_data = [
+            {"month": str(idx.strftime("%b %y")), "interest": int(val)}
+            for idx, val in df[kw].items()
+        ]
+        avg_interest = int(df[kw].mean())
+        peak         = int(df[kw].max())
+        recent       = int(df[kw].iloc[-1])
+        trend_dir    = "Growing" if df[kw].iloc[-1] > df[kw].iloc[0] else "Declining"
+
+        return json.dumps({
+            "keyword": kw,
+            "trend": trend_dir,
+            "avg": avg_interest,
+            "peak": peak,
+            "recent": recent,
+            "chart_data": chart_data   # ← this is what the frontend will chart
+        })
+    except Exception as e:
+        return json.dumps({"error": str(e), "chart_data": []})
+2. backend/agents.py — Update finance_critique to return chart data alongside text
+Find the active finance_critique function and update it:
+pythondef finance_critique(idea: str, proposal: str, fast: bool = False) -> dict:
+    import json
+    query       = " ".join(idea.split()[:3])
+    tool_result = get_google_trends.invoke(query)
+    snippet     = tool_result[:300]
+
+    # Parse the structured JSON from the tool
+    try:
+        trends_data = json.loads(tool_result)
+        chart_data  = trends_data.get("chart_data", [])
+        trend_text  = (
+            f"Keyword '{trends_data.get('keyword')}' is {trends_data.get('trend')}. "
+            f"Avg interest: {trends_data.get('avg')}/100, Peak: {trends_data.get('peak')}, "
+            f"Recent: {trends_data.get('recent')}."
+        )
+    except Exception:
+        chart_data = []
+        trend_text = tool_result  # fallback to raw string
+
+    prompt = (
+        f"You are the CFO reviewing this startup proposal for financial viability.\n"
+        f"Startup idea: '{idea}'\nProposal: '{proposal}'\n\n"
+        f"[LIVE GOOGLE TRENDS DATA]\n{trend_text}\n\n"
+        "Using the trend data above, give a 2-3 sentence critique covering:\n"
+        "- Whether market demand is growing or shrinking (cite the trend numbers)\n"
+        "- Estimated costs and a realistic revenue model\n"
+        "- TAM estimate and key unit economics (CAC, LTV)\n"
+        "End with exactly: [SCORE: X/10]"
+    )
+    raw    = call_ai(prompt, fast)
+    result = _parse_critique(raw, "Finance")
+    result.update({
+        "tool_name":           "Google Trends (PyTrends)",
+        "tool_query":          query,
+        "tool_result_snippet": snippet,
+        "chart_data":          chart_data,   # ← NEW: passed to frontend
+    })
+    return result
+3. backend/orchestrator.py — Pass chart_data in the SSE critique event
+Find this block in run_simulation_stream:
+pythonyield sse({
+    "type": "critique", "agent": c["agent"], "phase": 2,
+    "content": c["content"], "score": c["score"],
+    "grounded_by": c.get("tool_name"),
+})
+Change to:
+pythonyield sse({
+    "type":        "critique",
+    "agent":       c["agent"],
+    "phase":       2,
+    "content":     c["content"],
+    "score":       c["score"],
+    "grounded_by": c.get("tool_name"),
+    "chart_data":  c.get("chart_data", []),   # ← NEW
+})
+4. Frontend — Install Recharts and render in ResultsStage.jsx
+bashcd frontend && npm install recharts
+Then in the active ResultsStage.jsx, find where Finance critique events are rendered and add:
+jsximport {
+  LineChart, Line, XAxis, YAxis, Tooltip,
+  ResponsiveContainer, CartesianGrid, ReferenceLine
+} from "recharts";
+
+// Inside your critique card render, when agent === "Finance" and chart_data exists:
+{event.agent === "Finance" && event.chart_data?.length > 0 && (
+  <div className="mt-3 rounded-lg border border-white/10 bg-white/[0.03] p-3">
+    <p className="text-[10px] text-slate-500 font-fira mb-2 tracking-wider">
+      📈 MARKET INTEREST — LAST 12 MONTHS (Google Trends)
+    </p>
+    <ResponsiveContainer width="100%" height={120}>
+      <LineChart data={event.chart_data}>
+        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+        <XAxis
+          dataKey="month"
+          tick={{ fontSize: 9, fill: "#64748b" }}
+          interval={3}
+        />
+        <YAxis
+          domain={[0, 100]}
+          tick={{ fontSize: 9, fill: "#64748b" }}
+          width={25}
+        />
+        <Tooltip
+          contentStyle={{
+            background: "#0f172a",
+            border: "1px solid rgba(255,255,255,0.1)",
+            borderRadius: "6px",
+            fontSize: "11px",
+          }}
+        />
+        <ReferenceLine y={50} stroke="#334155" strokeDasharray="4 4" />
+        <Line
+          type="monotone"
+          dataKey="interest"
+          stroke="#a78bfa"
+          strokeWidth={2}
+          dot={false}
+          activeDot={{ r: 4, fill: "#a78bfa" }}
+        />
+      </LineChart>
+    </ResponsiveContainer>
+  </div>
+)}
+
