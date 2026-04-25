@@ -53,6 +53,23 @@ def search_competitors(query: str) -> str:
         return f"[TOOL ERROR] Tavily competitor search failed: {str(e)}"
 
 
+@tool
+def search_influencers(niche: str) -> str:
+    """Search for real named influencers in a niche with follower counts and engagement rates."""
+    if not TAVILY_KEY or TAVILY_KEY.startswith("your_"):
+        return "[FALLBACK] Tavily key not set. Proceeding without influencer data."
+    try:
+        from tavily import TavilyClient
+        client = TavilyClient(api_key=TAVILY_KEY)
+        results = client.search(f"{niche} top influencers 2025", max_results=3)
+        snippets = []
+        for r in results.get("results", []):
+            snippets.append(f"• Influencer Info: {r.get('title', '')}: {r.get('content', '')[:150]}")
+        return "\n".join(snippets[:3]) if snippets else "No influencer data found."
+    except Exception as e:
+        return f"[TOOL ERROR] Influencer search failed: {str(e)}"
+
+
 # ── Risk Tool: Social Proof via Demo Reddit Posts ────────────────────────────
 
 REDDIT_DEMO_PATH = os.path.join(os.path.dirname(__file__), "knowledge", "reddit_demo.txt")

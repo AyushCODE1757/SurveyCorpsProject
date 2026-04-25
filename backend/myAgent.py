@@ -12,6 +12,11 @@ import scrapireddit
 
 # Referencing old version for rag queries
 from rag import query_for_idea, query_for_risks, query_for_pitch
+from tools import (
+    search_recent_startups, search_competitors, search_influencers,
+    search_reddit_pain_points, get_google_trends, search_github_repos,
+    search_patents, search_regulations, deploy_to_github
+)
 
 load_dotenv()
 
@@ -205,22 +210,29 @@ def finance_critique(idea: str, proposal: str, fast: bool = False) -> dict:
 def marketing_critique(idea: str, proposal: str, fast: bool = False) -> dict:
     query       = f"{idea} competitor pricing"
     tool_result = search_competitors.invoke(query)
-    snippet     = tool_result[:300]
+    
+    influencer_query = f"{idea} niche"
+    influencer_result = search_influencers.invoke(influencer_query)
+    
+    snippet     = tool_result[:150] + " | " + influencer_result[:150]
 
     prompt = (
         f"You are the CMO reviewing this startup proposal for market traction potential.\n"
         f"Startup idea: '{idea}'\nProposal: '{proposal}'\n\n"
         f"[LIVE COMPETITOR INTELLIGENCE from Tavily]\n{tool_result}\n\n"
-        "Using the real competitor data above, give a 2-3 sentence critique covering:\n"
+        f"[INFLUENCER SUGGESTIONS from Tavily]\n{influencer_result}\n\n"
+        "Using the real competitor data and influencer data above, give a 2-3 sentence critique covering:\n"
         "- Name specific competitors and their pricing or weaknesses (use the data!)\n"
-        "- Best growth channel and our differentiation strategy\n"
+        "- Influencer suggestions (real named influencers with follower count/platform/engagement rate)\n"
+        "- Channel breakdown (primary + secondary channels with estimated CAC per channel)\n"
+        "- Differentiation statement (one crisp sentence vs named competitors)\n"
         "End with exactly: [SCORE: X/10]"
     )
     raw    = call_ai(prompt, fast)
     result = _parse_critique(raw, "Marketing")
     result.update({
-        "tool_name": "Tavily Competitor Intel",
-        "tool_query": query,
+        "tool_name": "Tavily Competitor & Influencer Intel",
+        "tool_query": f"{query} & {influencer_query}",
         "tool_result_snippet": snippet,
     })
     return result
