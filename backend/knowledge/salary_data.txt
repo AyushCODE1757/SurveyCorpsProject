@@ -1,0 +1,24 @@
+# Tech Startup Salary Benchmarks (2024-2025)
+
+## Engineering & Development
+- Software Engineer (USA/San Francisco): $130,000 - $180,000/yr
+- Software Engineer (USA/Remote): $110,000 - $150,000/yr
+- Software Engineer (Europe/London): £70,000 - £100,000/yr ($90k - $130k)
+- Software Engineer (India/Bangalore): ₹1,500,000 - ₹3,000,000/yr ($18k - $36k)
+- CTO / Lead Developer (USA): $160,000 - $220,000/yr + significant equity
+
+## Product & Design
+- Product Manager (USA): $120,000 - $160,000/yr
+- UX/UI Designer (USA): $100,000 - $140,000/yr
+- Product Manager (Europe): $80,000 - $120,000/yr
+
+## Marketing & Sales
+- Growth Hacker / Marketing Lead (USA): $100,000 - $150,000/yr
+- Sales Executive (USA): $80,000 base + commission (OTE $150k+)
+- Social Media Manager (Remote Global): $50,000 - $80,000/yr
+
+## Operations & Finance
+- Operations Manager (USA): $90,000 - $130,000/yr
+- Startup CFO / VP Finance (USA): $150,000 - $200,000/yr
+
+Note: Early stage startups often pay 10-20% below these market rates but compensate with 0.5% - 2% equity grants.
