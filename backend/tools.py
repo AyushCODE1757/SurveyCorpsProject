@@ -33,6 +33,16 @@ def search_recent_startups(query: str) -> str:
     except Exception as e:
         return f"[TOOL ERROR] Tavily search failed: {str(e)}"
 
+@tool
+def get_salary_benchmarks(role: str, location: str) -> str:
+    """Get salary benchmarks for a given role and location using RAG knowledge base."""
+    try:
+        from rag import query_for_salary
+        result = query_for_salary(role, location)
+        return result if result else f"No salary data found for {role} in {location}."
+    except Exception as e:
+        return f"[TOOL ERROR] Salary benchmark search failed: {str(e)}"
+
 
 # ── Marketing Tool: Competitor Intelligence via Tavily ────────────────────────
 

@@ -8,9 +8,14 @@ import re
 import json as _json
 from dotenv import load_dotenv
 from huggingface_hub import InferenceClient
-import scrapi_reddit
+# import scrapi_reddit~
 # Referencing old version for rag queries
-from rag import query_for_idea, query_for_risks, query_for_pitch
+from rag import query_for_idea, query_for_risks, query_for_pitch, query_legal_kb
+from tools import (
+    search_recent_startups, search_github_repos, get_google_trends,
+    search_competitors, search_patents, search_regulations, search_influencers,
+    get_salary_benchmarks
+)
 
 load_dotenv()
 
@@ -59,7 +64,7 @@ from scrapi_reddit import build_session, ScrapeOptions, build_search_target, pro
 
 def risk_critique(idea: str, proposal: str, fast: bool = False) -> dict:
     # 1. Old Version RAG lookup for startup failures
-    # rag_failures = query_for_risks(idea)
+    rag_failures = query_for_risks(idea)
     
     # 2. Implement risk using the open source reddit library scrapireddit
     query = " ".join(idea.split()[:4])
@@ -104,7 +109,7 @@ def risk_critique(idea: str, proposal: str, fast: bool = False) -> dict:
     
     snippet = tool_result[:300]
     
-    return {"risk_snippet": snippet}
+    
 
     prompt = (
         f"You are the Chief Risk Officer reviewing this startup proposal.\n"
@@ -156,28 +161,51 @@ def ceo_propose(idea: str, fast: bool = False) -> dict:
     rag_context = query_for_idea(idea)
     query       = f"recent startups {idea} 2024 2025"
     tool_result = search_recent_startups.invoke(query)
-    snippet     = tool_result[:300]
+    salary_data = get_salary_benchmarks.invoke({"role": "Software Engineer", "location": "USA"})
+    snippet     = (tool_result[:300] + " | " + salary_data[:100])
 
     prompt = (
         f"You are the visionary CEO of a new startup. The idea is: '{idea}'.\n\n"
-        f"[YC & PAUL GRAHAM KNOWLEDGE BASE]\n{rag_context}\n\n"
+        f"[YC & PAUL GRAHAM & FORTUNE 500 KNOWLEDGE BASE]\n{rag_context}\n\n"
         f"[LIVE MARKET DATA from Tavily web search]\n{tool_result}\n\n"
-        "Using BOTH the proven VC wisdom above AND the live market data, draft a concise business proposal "
-        "(3-4 sentences) covering:\n"
+        f"[LIVE SALARY DATA for cost estimation]\n{salary_data}\n\n"
+        "Using BOTH the proven VC wisdom above AND the live market/salary data, draft a comprehensive business proposal "
+        "covering:\n"
         "1. Core value proposition that differentiates from what already exists\n"
         "2. Target market (be specific — cite a real segment from the data)\n"
-        "3. Go-to-market strategy grounded in what has worked for similar startups\n"
-        "Reference specific competitors, PG insights, or YC patterns. Write in prose, no bullet points."
+        "3. Go-to-market strategy grounded in what has worked for similar startups\n\n"
+        "Also include a JSON block at the very end wrapped in ```json ... ``` with this exact structure:\n"
+        "{\n"
+        '  "workforce_plan": [{"title": "CTO", "headcount": 1, "phase": "MVP", "monthly_cost": 10000}],\n'
+        '  "timeline": [{"phase": "Month 1-3", "months": "1-3", "deliverables": "MVP launch"}]\n'
+        "}\n"
+        "Output format: The prose proposal, followed by the structured markdown tables, followed by the JSON block."
     )
     content = call_ai(prompt, fast)
+    
+    workforce_plan = []
+    timeline = []
+    json_match = re.search(r'```json\s*(\{.*?\})\s*```', content, re.DOTALL)
+    if json_match:
+        try:
+            parsed = _json.loads(json_match.group(1))
+            workforce_plan = parsed.get("workforce_plan", [])
+            timeline = parsed.get("timeline", [])
+            content = content[:json_match.start()] + content[json_match.end():]
+        except Exception:
+            pass
+
     return {
         "agent": "CEO",
-        "tool_name": "Tavily Web Search",
+        "tool_name": "Tavily Web Search + Salary API",
         "tool_query": query,
         "tool_result_snippet": snippet,
         "rag_used": True,
-        "content": content,
+        "content": content.strip(),
+        "workforce_plan": workforce_plan,
+        "timeline": timeline,
     }
+
 
 
 # ── PHASE 2: Developer Critique ───────────────────────────────────────────────
@@ -276,35 +304,6 @@ def marketing_critique(idea: str, proposal: str, fast: bool = False) -> dict:
     })
     return result
 
-
-# ── PHASE 2: Risk Critique ────────────────────────────────────────────────────
-
-
-    rag_failures = query_for_risks(idea)
-    query        = " ".join(idea.split()[:4])
-    tool_result  = search_reddit_pain_points.invoke(query)
-    snippet      = tool_result[:300]
-
-    prompt = (
-        f"You are the Chief Risk Officer reviewing this startup proposal.\n"
-        f"Startup idea: '{idea}'\nProposal: '{proposal}'\n\n"
-        f"[STARTUP FAILURE POST-MORTEMS from knowledge base]\n{rag_failures}\n\n"
-        f"[LIVE REDDIT COMMUNITY DATA — real user pain points]\n{tool_result}\n\n"
-        "Using BOTH the failure patterns above AND the Reddit data, give a 2-3 sentence critique covering:\n"
-        "- Which known startup failure pattern (from the knowledge base) does this idea risk repeating?\n"
-        "- How validated is this problem from Reddit data? (cite actual posts if found)\n"
-        "- Top 2 risks with specific mitigation strategies\n"
-        "End with exactly: [SCORE: X/10]"
-    )
-    raw    = call_ai(prompt, fast)
-    result = _parse_critique(raw, "Risk")
-    result.update({
-        "tool_name": "Reddit API (PRAW)",
-        "tool_query": query,
-        "tool_result_snippet": snippet,
-        "rag_used": True,
-    })
-    return result
 
 
 # ── PHASE 2: Legal Critique (Grounded by Patents & Regulations) ──────────────

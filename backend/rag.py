@@ -72,3 +72,7 @@ def query_for_pitch(idea: str):
 def query_legal_kb(topic: str):
     """Query the knowledge base specifically for legal and labour law context."""
     return query_knowledge(f"legal requirements and labour laws for: {topic}", 3)
+
+def query_for_salary(role: str, location: str):
+    """Query the knowledge base for salary benchmarks."""
+    return query_knowledge(f"salary benchmark for {role} in {location}", 2)
