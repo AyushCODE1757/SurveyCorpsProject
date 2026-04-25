@@ -103,8 +103,25 @@ def _load_reddit_posts() -> list[dict]:
     return posts
 
 
+# @tool
+# def search_reddit_pain_points(keyword: str) -> str:
+#     posts = _load_reddit_posts()
+#     if not posts: return "[FALLBACK] Reddit demo file not found."
+#     keywords = keyword.lower().split()
+#     def score(post):
+#         text = (post["title"] + " " + post["body"]).lower()
+#         return sum(1 for kw in keywords if kw in text)
+#     ranked = sorted(posts, key=score, reverse=True)
+#     top    = [p for p in ranked if score(p) > 0][:5]
+#     if not top: top = ranked[:3]
+#     lines = []
+#     for p in top:
+#         snippet = p["body"][:180].replace("\n", " ") + "..."
+#         lines.append(f"• {p['subreddit']}: \"{p['title']}\" — {snippet}")
+#     return "\n".join(lines) if lines else "No results found."
 @tool
 def search_reddit_pain_points(keyword: str) -> str:
+    """Search a curated database of Reddit posts to find common startup pain points and social proof."""
     posts = _load_reddit_posts()
     if not posts: return "[FALLBACK] Reddit demo file not found."
     keywords = keyword.lower().split()
@@ -160,8 +177,27 @@ def get_google_trends(keyword: str) -> str:
 
 # ── Developer Tool: GitHub Stack Validator ────────────────────────────────────
 
+# @tool
+# def search_github_repos(query: str) -> str:
+#     try:
+#         url      = f"https://api.github.com/search/repositories?q={query}&sort=stars&order=desc"
+#         response = requests.get(url, timeout=8)
+#         response.raise_for_status()
+#         repos = response.json().get("items", [])[:4]
+#         if not repos: return "No similar GitHub repositories found."
+#         lines = []
+#         for repo in repos:
+#             lang  = repo.get("language") or "Unknown"
+#             stars = repo.get("stargazers_count", 0)
+#             desc  = (repo.get("description") or "")[:100]
+#             lines.append(f"• {repo['full_name']} [{lang}] ⭐{stars:,} — {desc}")
+#         return "\n".join(lines)
+#     except Exception as e:
+#         return f"[TOOL ERROR] GitHub search failed: {str(e)}"
+
 @tool
 def search_github_repos(query: str) -> str:
+    """Search GitHub for existing open-source repositories related to a specific tech stack or idea."""
     try:
         url      = f"https://api.github.com/search/repositories?q={query}&sort=stars&order=desc"
         response = requests.get(url, timeout=8)
@@ -218,8 +254,34 @@ def search_regulations(query: str) -> str:
 
 # ── Developer Agent: Autonomous GitHub Deployment ────────────────────────────
 
+# @tool
+# def deploy_to_github(repo_name: str, files_json: str) -> str:
+#     github_token = os.getenv("GITHUB_TOKEN", "")
+#     if not github_token or github_token.startswith("your_"):
+#         return "[FALLBACK] GITHUB_TOKEN not set."
+#     try:
+#         from github import Github, GithubException
+#         files = json.loads(files_json)
+#         g     = Github(github_token)
+#         user  = g.get_user()
+#         safe_name = re.sub(r"[^a-zA-Z0-9\-]", "-", repo_name.lower()).strip("-")[:80]
+#         try:
+#             repo = user.create_repo(safe_name, private=True, auto_init=False)
+#         except GithubException as e:
+#             if e.status == 422: repo = user.get_repo(safe_name)
+#             else: raise
+#         for i, (filename, content) in enumerate(files.items()):
+#             try:
+#                 repo.create_file(path=filename, message=f"Add {filename}", content=content, branch="main")
+#             except: pass
+#         return repo.html_url
+#     except Exception as e:
+#         return f"[TOOL ERROR] Deployment failed: {str(e)}"
+
+
 @tool
 def deploy_to_github(repo_name: str, files_json: str) -> str:
+    """Creates a new private GitHub repository and commits the provided files."""
     github_token = os.getenv("GITHUB_TOKEN", "")
     if not github_token or github_token.startswith("your_"):
         return "[FALLBACK] GITHUB_TOKEN not set."
