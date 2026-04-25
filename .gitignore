@@ -1,0 +1,21 @@
+# Reference folder
+Hack2SkillsHackathon/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.env
+venv/
+.venv/
+env/
+.env/
+
+# Data
+chroma_data/
+backend/knowledge/
+tmp/
+
+# OS
+.DS_Store
+Thumbs.db

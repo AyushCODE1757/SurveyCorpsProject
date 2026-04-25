@@ -1,0 +1,396 @@
+FoundrAI 2.0 — Full PRD + Project 
+Context 
+What Is FoundrAI 2.0 
+FoundrAI 2.0 is an autonomous multi-agent business validation engine. A founder describes 
+their startup idea — either via a plain text prompt or a structured intake form — and a team 
+of 5 specialized AI agents debate the strategy, score it through a consensus protocol, and 
+produce a complete validated business plan with real market data, GitHub deployment, and 
+PDF export. 
+The system is not a chatbot. It is a deliberation engine: agents critique each other, revise 
+proposals through negotiation rounds, and only converge when a consensus score of 7.5/10 
+is reached. Every output is grounded in live external data — not hallucinated. 
+Current Stack 
+Backend: FastAPI + Uvicorn, Python 3.11, HuggingFace Inference (Qwen2.5), LangChain 
+@tool, ChromaDB RAG, Docker 
+Frontend: Next.js 16, Tailwind CSS, Zustand, SVG-based pentagon arena, SSE streaming 
+External APIs: Tavily (web search), GitHub REST + PyGithub (deployment), PyTrends 
+(Google Trends), Reddit PRAW (community data), HuggingFace Inference API 
+Current Folder Structure 
+founderai2/ 
+├── docker-compose.yml 
+├── .env 
+├── .gitignore 
+│ 
+├── backend/ 
+│   ├── Dockerfile 
+│   ├── main.py 
+│   ├── agents.py 
+│   ├── orchestrator.py 
+│   ├── tools.py 
+│   ├── rag.py 
+│   ├── requirements.txt 
+│   └── knowledge/ 
+│       └── reddit_demo.txt 
+│ 
+└── frontend/ 
+    └── foundrai-next/ 
+        ├── package.json 
+        ├── tailwind.config.js 
+        ├── next.config.mjs 
+        ├── app/ 
+        │   ├── layout.js 
+        │   ├── page.js 
+        │   └── globals.css 
+        ├── store/ 
+        │   └── useAppStore.js 
+        ├── hooks/ 
+        │   └── useSimulation.js 
+        ├── lib/ 
+        │   └── utils.js 
+        └── components/ 
+            ├── layout/ 
+            │   └── Navbar.jsx 
+            ├── landing/ 
+            │   └── LandingStage.jsx 
+            ├── active/ 
+            │   ├── ActiveStage.jsx 
+            │   ├── PhaseBar.jsx 
+            │   ├── RoundTable.jsx 
+            │   ├── LiveFeed.jsx 
+            │   └── LivingDocument.jsx 
+            ├── results/ 
+            │   └── ResultsStage.jsx 
+            └── ui/ 
+                └── progress-ring.jsx 
+ 
+ 
+Updated Folder Structure (with all new additions) 
+founderai2/ 
+├── docker-compose.yml 
+├── .env 
+├── .gitignore 
+│ 
+├── backend/ 
+│   ├── Dockerfile 
+│   ├── main.py 
+│   ├── agents.py               ← CEO, Dev, Finance, Marketing, Risk upgraded 
+│   ├── agents_legal.py         ← NEW: Legal agent 
+│   ├── orchestrator.py         ← updated: 6 agents, new phases 
+│   ├── tools.py                ← updated: new tools added 
+│   ├── tools_legal.py          ← NEW: patent/policy/labour law tools 
+│   ├── rag.py 
+│   ├── requirements.txt 
+│   └── knowledge/ 
+│       ├── reddit_demo.txt 
+│       ├── legal_frameworks.txt    ← NEW: legal KB chunks 
+│       └── labour_laws.txt         ← NEW: country-specific labour law KB 
+│ 
+└── frontend/ 
+    └── foundrai-next/ 
+        ├── package.json 
+        ├── tailwind.config.js 
+        ├── next.config.mjs 
+        ├── app/ 
+        │   ├── layout.js 
+        │   ├── page.js 
+        │   └── globals.css 
+        ├── store/ 
+        │   └── useAppStore.js      ← updated: form state, legal agent state 
+        ├── hooks/ 
+        │   └── useSimulation.js 
+        ├── lib/ 
+        │   └── utils.js            ← updated: legal agent config, chart helpers 
+        └── components/ 
+            ├── layout/ 
+            │   └── Navbar.jsx 
+            ├── intake/             ← NEW folder 
+            │   ├── IntakeStage.jsx     ← NEW: full form page 
+            │   ├── FormField.jsx       ← NEW: reusable field component 
+            │   └── PromptPreview.jsx   ← NEW: shows generated prompt from form 
+            ├── landing/ 
+            │   └── LandingStage.jsx    ← updated: dual input mode 
+            ├── active/ 
+            │   ├── ActiveStage.jsx 
+            │   ├── PhaseBar.jsx        ← updated: 5 phases now 
+            │   ├── RoundTable.jsx      ← updated: 6 nodes including Legal 
+            │   ├── LiveFeed.jsx 
+            │   ├── LivingDocument.jsx 
+            │   └── RedditFeed.jsx      ← NEW: real-time Reddit posts panel 
+            ├── results/ 
+            │   ├── ResultsStage.jsx    ← updated: new tabs, CFO charts 
+            │   ├── CfoCharts.jsx       ← NEW: ROI, burn rate, revenue charts 
+            │   └── LegalReport.jsx     ← NEW: legal findings structured view 
+            └── ui/ 
+├── progress-ring.jsx 
+└── chart.jsx           
+← NEW: recharts wrapper 
+Full PRD 
+1. Product Overview 
+Name: FoundrAI 2.0 Type: Autonomous Multi-Agent Business Validation Engine Target 
+User: Early-stage founders, hackathon participants, solo entrepreneurs, product managers 
+validating new ideas Core Promise: Enter your idea. 6 AI agents debate it with real market 
+data. Get a validated business plan, legal check, GitHub repo, and PDF — in under 3 
+minutes. 
+2. Input System — Dual Mode 
+Mode A: Free Text Prompt 
+User types their idea in plain English in the terminal-style textarea. Same as current. 
+Suitable for technical users who know how to write a good prompt. 
+Mode B: Structured Intake Form 
+User fills an 11-field form. The system auto-generates a rich structured prompt from their 
+answers and passes it to the agent pipeline. Suitable for non-technical founders. 
+Form fields: 
+# 
+Field 
+1 Startup Name & 
+Tagline 
+2 The Problem 
+Type 
+Short text 
+Textarea 
+Open input 
+Open input 
+Options 
+Textarea 
+Open input 
+3 The Solution / Core 
+Feature 
+4 Startup Stage 
+5 Market Type 
+6 Target Audience 
+7 Revenue Model 
+Dropdown Idea / Building MVP / Early Revenue / Scaling 
+Dropdown B2B / B2C / SaaS / Marketplace / D2C 
+Dropdown Enterprise / SMBs / Consumers / Creators / 
+Other 
+Dropdown Subscription / Ads / Commission / One-time 
+Sale / Pre-revenue 
+8 Primary Tech Platform Dropdown Web App / Mobile App / API / No-Code 
+9 Data Sensitivity 
+10 Biggest Bottleneck 
+11 Team Edge 
+Dropdown General / Financial (High risk) / Health (High 
+risk) 
+Dropdown Tech & Dev / Marketing & Sales / Funding / 
+Legal / Strategy 
+Dropdown Tech-Heavy / Marketing-Heavy / Domain 
+Experts / Solo Founder 
+Prompt generation logic (backend): The form answers are assembled into a structured 
+string: 
+Startup: {name} — {tagline} 
+Problem: {problem} 
+Solution: {solution} 
+Stage: {stage} | Market: {market_type} | Audience: {audience} 
+Revenue: {revenue_model} | Platform: {platform} 
+Data Sensitivity: {data_sensitivity} 
+Key bottleneck: {bottleneck} | Team: {team_edge} 
+This string replaces the free-text idea in all agent prompts. 
+UI flow: Landing page has two tabs — "Quick Prompt" and "Build with Form". Selecting 
+"Build with Form" shows the intake form. Completing it shows a PromptPreview component 
+displaying the generated prompt. User can edit it before launching. 
+3. Agent Upgrades 
+3.1 CEO Agent — Upgraded 
+New outputs: 
+● Workforce plan: suggested founding team roles with headcount per phase (Idea / 
+MVP / Scale) 
+● Timeline: milestone roadmap (Month 1-3, 3-6, 6-12, 12-24) with specific deliverables 
+● Estimated cost breakdown: real cost estimates per phase using market rate data (not 
+made up) 
+Tool added: get_salary_benchmarks(role, location) — queries public salary 
+APIs or uses RAG data to estimate team cost 
+Output format: Structured markdown with a timeline table and a cost table alongside the 
+prose proposal 
+3.2 Marketing Agent (CMO) — Upgraded 
+New outputs: 
+● Influencer suggestions: real named influencers in the relevant niche with follower 
+count, platform, engagement rate — sourced from Tavily search for "{niche} top 
+influencers 2025" 
+● Channel breakdown: primary + secondary channels with estimated CAC per channel 
+● Differentiation statement: one crisp sentence vs named competitors 
+Tool added: search_influencers(niche) — Tavily search returning real names and 
+handles 
+3.3 Finance Agent (CFO) — Upgraded 
+New outputs: 
+● ROI projection: Year 1, Year 2, Year 3 with assumptions stated 
+● Burn rate estimate: monthly burn at each stage 
+● Break-even analysis: month number and revenue required 
+● Return on Investment table: investor perspective with realistic multiples 
+● Feasibility score: explicit 1-10 with reasoning 
+Frontend change: CFO tab on results page shows charts — line chart for revenue 
+projection, bar chart for burn rate, single ROI number highlighted. Uses Recharts library 
+already available. 
+Output format: Structured sections with explicit numeric tables the frontend can parse into 
+chart data 
+3.4 Developer Agent — Upgraded 
+New outputs: 
+● Detailed README: not initial code, just a comprehensive README with architecture 
+diagram in ASCII, setup steps, API reference table, environment variables table 
+● Docker Compose: production-grade with health checks, named volumes, 
+environment-specific configs, comments explaining each service 
+● No starter code generated — README and Docker Compose only, done well 
+Prompt change: Remove instruction to generate app/main.py. Focus LLM tokens on 
+making README and docker-compose excellent and specific to the idea. 
+3.5 Risk Agent — Upgraded 
+New outputs: 
+● Real-time Reddit posts: actual post titles and snippets surfaced from 
+search_reddit_pain_points shown as cards in the frontend live feed — not just 
+summarized 
+● Each Reddit result shown as a card: subreddit name, post title, upvote range, 2-line 
+snippet, relevance tag 
+Frontend change: New RedditFeed.jsx component in the active stage right column — 
+shows Reddit cards as they arrive via SSE, alongside the existing live feed 
+SSE event added: reddit_result — { type: "reddit_result", posts: 
+[{subreddit, title, body_snippet, score_range}] } 
+3.6 Legal Agent — New 
+Purpose: Checks the startup idea for legal exposure before the founder commits resources. 
+What it checks: 
+● Patent landscape: are there existing patents that could block this product 
+● Regulatory compliance: industry-specific regulations (GDPR, HIPAA, FINRA, FDA 
+depending on data_sensitivity field) 
+● Country-specific policy: primary market legal requirements (incorporaton, licensing) 
+● Labour law: employment vs contractor classification risk, equity/vesting compliance 
+● IP ownership: open source license conflicts in the proposed tech stack 
+Tools: 
+● search_patents(idea) — Google Patents via Tavily search 
+● search_regulations(industry, country) — Tavily search for regulatory 
+requirements 
+● query_legal_kb(topic) — ChromaDB over legal_frameworks.txt and 
+labour_laws.txt 
+Output format: 
+Legal Risk Score: X/10 (lower = more risk) 
+| Area | Finding | Severity | Recommendation | 
+|---|---|---|---| 
+| Patents | 3 relevant patents found | Medium | Design around claim 4 | 
+| GDPR | User data stored → consent required | High | Add consent flow | 
+| Labour | Contractors >6mo = employee risk | Medium | Use proper agreements | 
+Frontend: Legal tab added to results page. LegalReport.jsx renders the structured table 
+with color-coded severity badges. Legal agent runs in parallel with Phase 2 critiques. 
+Phase change: Phase 2 is now "Parallel Critique + Legal Scan" — Legal runs concurrently 
+with Dev/Finance/Marketing/Risk. 
+4. Frontend Changes 
+4.1 Stage Flow Update 
+Landing (dual mode) → Intake Form (if form mode) → Active (6-agent arena) → Results 
+4.2 Pentagon → Hexagon 
+RoundTable SVG updated from 5-point pentagon to 6-point hexagon to accommodate Legal 
+agent. getCirclePoints(6, cx, cy, r, -90) — one line change. 
+4.3 PhaseBar Update 
+Phases updated to: 
+1. Intake & Research 
+2. CEO Proposal 
+3. Parallel Critique + Legal Scan 
+4. Negotiation & Revision 
+5. Synthesis 
+4.4 CFO Charts (new) 
+Results page CFO tab shows: 
+● Line chart: 3-year revenue projection 
+● Bar chart: monthly burn rate by stage 
+● Stat card: ROI multiple, break-even month 
+● Feasibility score ring (reuses ProgressRing component) 
+4.5 Reddit Feed Panel (new) 
+During active simulation, right column has three sections stacked: 
+● Live Feed (agent discussion) 
+● Reddit Feed (real posts as cards) 
+● Living Document 
+4.6 Legal Tab on Results 
+New tab in results: 
+⚖
+ Legal Assessment. Renders LegalReport.jsx with 
+severity-color-coded table (red=High, amber=Medium, green=Low). 
+5. Updated API Endpoints 
+Method 
+POST 
+Path 
+/simulate 
+Description 
+SSE stream — accepts both free-text idea and form_data 
+object 
+POST 
+/approve-deploy 
+Human-approved GitHub deployment 
+POST /monitor Auto-monitor daemon 
+GET /download-report PDF with all sections including legal 
+GET /health Container health 
+Updated /simulate request body: 
+{ 
+  "idea": "optional free text", 
+  "form_data": { 
+    "name": "Acme", 
+    "tagline": "Fast analytics", 
+    "problem": "...", 
+    "solution": "...", 
+    "stage": "Building MVP", 
+    "market_type": "B2B", 
+    "audience": "SMBs", 
+    "revenue_model": "Subscription", 
+    "platform": "Web App", 
+    "data_sensitivity": "General Data", 
+    "bottleneck": "Marketing & Sales", 
+    "team_edge": "Tech-Heavy" 
+  }, 
+  "fast": false 
+} 
+ 
+Backend uses idea if provided, otherwise assembles prompt from form_data. 
+ 
+6. Updated SSE Event Types 
+Existing events unchanged. New events added: 
+Event Payload 
+reddit_result { posts: [{subreddit, title, body_snippet, 
+score_range}] } 
+legal_thinking 
+{ agent: "Legal" } 
+legal_result 
+cfo_chart_data 
+influencer_result 
+workforce_plan 
+timeline 
+{ content, risk_score, findings: [{area, finding, 
+severity, recommendation}] } 
+{ revenue: [...], burn: [...], roi_multiple, 
+breakeven_month } 
+{ influencers: [{name, platform, followers, 
+engagement_rate, handle}] } 
+{ roles: [{title, headcount, phase, monthly_cost}] 
+} 
+{ milestones: [{phase, months, deliverables}] } 
+7. Consensus Protocol Update 
+Legal agent does not participate in consensus scoring — it runs as an advisory agent. 
+Consensus is still computed from CEO/Dev/Finance/Marketing/Risk (5 agents, threshold 
+7.5/10). Legal risk score is shown separately as a standalone metric. 
+8. What Does Not Change 
+● SSE streaming architecture 
+● Zustand store pattern 
+● Drag-handle resizable panes 
+● PDF export (legal section added as new section in PDF) 
+● GitHub deploy flow and tools.py fix 
+● ChromaDB RAG setup 
+● Docker Compose infrastructure 
+9. Contribution Summary (What Was Built) 
+Phase 1 — Core deliberation engine 
+● 5-agent SSE streaming pipeline from scratch 
+● Per-agent LangChain tool integration (5 different external APIs) 
+● ChromaDB RAG with 54 curated knowledge chunks 
+● Consensus scoring protocol with negotiation rounds 
+● FastAPI backend with human-in-the-loop deploy gate 
+Phase 2 — Frontend 
+● 3-stage Next.js SPA with Zustand (no routing) 
+● SVG pentagon arena with trig-positioned nodes, animated states 
+● Resizable split panes (both page 2 and page 3) — no library 
+● Living document with skeleton shimmers filling in real time 
+● Rich live feed with elaborated per-event-type headings 
+● Full discussion persistence from page 2 to page 3 
+● PDF export with full agent log, markdown table rendering, print CSS 
+Phase 3 — Bugs fixed 
+● GitHub 404: Contents API fix (root cause: Git Data API + empty repo) 
+● Auto-navigation: removed 3 separate forced stage changes 
+● Marketing/Risk loading skeletons: livingDoc fallback in TabContent 
+● Hardcoded tech table: replaced with _extract_tech_table() keyword parser 
+● tools.py ImportError: my replacement wiped existing functions — lesson learned, 
+surgical edits only 
+Phase 4 — Planned (new additions above) 
+● Dual input mode with structured intake form 
+● Legal agent (6th agent, advisory, parallel to Phase 2) 
+● CFO visual charts (ROI, burn, revenue projection) 
+● CMO influencer suggestions (real named people) 
+● CEO workforce + timeline + cost outputs 
+● Reddit posts as live cards in frontend 
+● Hexagon arena (5→6 nodes) 
