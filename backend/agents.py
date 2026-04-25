@@ -8,8 +8,7 @@ import re
 import json as _json
 from dotenv import load_dotenv
 from huggingface_hub import InferenceClient
-import scrapireddit
-
+import scrapi_reddit
 # Referencing old version for rag queries
 from rag import query_for_idea, query_for_risks, query_for_pitch
 
@@ -54,25 +53,58 @@ def _parse_critique(raw: str, agent: str) -> dict:
     return {"agent": agent, "content": raw, "score": score}
 
 # ── PHASE 2: Risk Critique ────────────────────────────────────────────────────
+import json
+from pathlib import Path
+from scrapi_reddit import build_session, ScrapeOptions, build_search_target, process_listing
+
 def risk_critique(idea: str, proposal: str, fast: bool = False) -> dict:
     # 1. Old Version RAG lookup for startup failures
-    rag_failures = query_for_risks(idea)
+    # rag_failures = query_for_risks(idea)
     
     # 2. Implement risk using the open source reddit library scrapireddit
-    query        = " ".join(idea.split()[:4])
+    query = " ".join(idea.split()[:4])
     
-    # Using scrapireddit resources to get recent relevant posts
     try:
-        # Example of using scrapireddit to fetch subreddit data/pain points
-        posts = scrapireddit.search(query=query, limit=5, sort="relevance")
+        session = build_session("risk-critique-app/1.0", verify=True)
+        output_dir = Path("./reddit_data")
+        
+        # CORRECTED: Added the missing required parameters
+        options = ScrapeOptions(
+            output_root=output_dir, 
+            listing_limit=5, 
+            comment_limit=0,      # Required: 0 skips fetching comments
+            delay=3.0,            # Required: 1 second between requests
+            time_filter="year",   # Required: Search time window
+            output_formats={"json"}
+        )
+        
+        # Build the search target with your query
+        target = build_search_target(query=query, sort="relevance", time_filter="year")
+        
+        # Process the listing
+        process_listing(target, session=session, options=options)
+        
+        # Read the data back from the disk to build your snippets
         snippets = []
-        for post in posts:
-            snippets.append(f"• r/{post.subreddit}: \"{post.title}\" - {str(post.selftext)[:150]}...")
+        if output_dir.exists():
+            for json_file in output_dir.rglob("*.json"):
+                with open(json_file, 'r', encoding='utf-8') as f:
+                    post_data = json.load(f)
+                    
+                    title = post_data.get("title", "No Title")
+                    subreddit = post_data.get("subreddit", "unknown")
+                    selftext = post_data.get("selftext", "")
+                    
+                    snippets.append(f"• r/{subreddit}: \"{title}\" - {str(selftext)[:150]}...")
+                    
         tool_result = "\n".join(snippets) if snippets else "No relevant Reddit discussions found."
+        
     except Exception as e:
-        tool_result = f"Failed to retrieve Reddit posts via scrapireddit: {str(e)}"
+        tool_result = f"Failed to retrieve Reddit posts via scrapi_reddit: {str(e)}"
     
     snippet = tool_result[:300]
+    
+    return {"risk_snippet": snippet}
 
     prompt = (
         f"You are the Chief Risk Officer reviewing this startup proposal.\n"
@@ -228,7 +260,7 @@ def marketing_critique(idea: str, proposal: str, fast: bool = False) -> dict:
 
 # ── PHASE 2: Risk Critique ────────────────────────────────────────────────────
 
-def risk_critique(idea: str, proposal: str, fast: bool = False) -> dict:
+
     rag_failures = query_for_risks(idea)
     query        = " ".join(idea.split()[:4])
     tool_result  = search_reddit_pain_points.invoke(query)
