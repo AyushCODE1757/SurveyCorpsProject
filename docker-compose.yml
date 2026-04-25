@@ -1,0 +1,31 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend/chroma_data:/app/chroma_data
+      - ./backend/reddit_data:/app/reddit_data
+    env_file:
+      - .env
+    restart: always
+
+  frontend:
+    build:
+      context: ./frontend/foundrai-next
+      dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_API_URL=http://localhost:8000
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+    depends_on:
+      - backend
+    restart: always
+
+networks:
+  default:
+    name: foundrai-network
