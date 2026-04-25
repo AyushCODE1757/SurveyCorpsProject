@@ -118,7 +118,7 @@ def search_reddit_pain_points(keyword: str) -> str:
     for p in top:
         snippet = p["body"][:180].replace("\n", " ") + "..."
         lines.append(f"• {p['subreddit']}: \"{p['title']}\" — {snippet}")
-    return "\n".join(lines)
+    return "\n".join(lines) if lines else "No results found."
 
 
 # ── Finance Tool: Market Demand via PyTrends ──────────────────────────────────
