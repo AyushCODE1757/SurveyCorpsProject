@@ -8,8 +8,6 @@ import re
 import json as _json
 from dotenv import load_dotenv
 from huggingface_hub import InferenceClient
-# import scrapi_reddit~
-# Referencing old version for rag queries
 from rag import query_for_idea, query_for_risks, query_for_pitch, query_legal_kb
 from tools import (
     search_recent_startups, search_github_repos, get_google_trends,
@@ -57,59 +55,57 @@ def _parse_critique(raw: str, agent: str) -> dict:
         raw   = raw[:match.start()].strip()
     return {"agent": agent, "content": raw, "score": score}
 
+
 # ── PHASE 2: Risk Critique ────────────────────────────────────────────────────
 import json
 from pathlib import Path
-from scrapi_reddit import build_session, ScrapeOptions, build_search_target, process_listing
 
 def risk_critique(idea: str, proposal: str, fast: bool = False) -> dict:
-    # 1. Old Version RAG lookup for startup failures
+    # 1. RAG lookup for startup failures
     rag_failures = query_for_risks(idea)
-    
-    # 2. Implement risk using the open source reddit library scrapireddit
+
+    # 2. Reddit scraping via scrapi_reddit — entire block inside try
     query = " ".join(idea.split()[:4])
-    
+
     try:
-        session = build_session("risk-critique-app/1.0", verify=True)
+        from scrapi_reddit import (build_session, ScrapeOptions,
+                                   build_search_target, process_listing)
+
+        session    = build_session("risk-critique-app/1.0", verify=True)
         output_dir = Path("./reddit_data")
-        
-        # CORRECTED: Added the missing required parameters
+
         options = ScrapeOptions(
-            output_root=output_dir, 
-            listing_limit=5, 
-            comment_limit=0,      # Required: 0 skips fetching comments
-            delay=3.0,            # Required: 1 second between requests
-            time_filter="year",   # Required: Search time window
+            output_root=output_dir,
+            listing_limit=5,
+            comment_limit=0,
+            delay=3.0,
+            time_filter="year",
             output_formats={"json"}
         )
-        
-        # Build the search target with your query
+
         target = build_search_target(query=query, sort="relevance", time_filter="year")
-        
-        # Process the listing
         process_listing(target, session=session, options=options)
-        
-        # Read the data back from the disk to build your snippets
+
         snippets = []
         if output_dir.exists():
             for json_file in output_dir.rglob("*.json"):
-                with open(json_file, 'r', encoding='utf-8') as f:
+                with open(json_file, "r", encoding="utf-8") as f:
                     post_data = json.load(f)
-                    
-                    title = post_data.get("title", "No Title")
-                    subreddit = post_data.get("subreddit", "unknown")
-                    selftext = post_data.get("selftext", "")
-                    
-                    snippets.append(f"• r/{subreddit}: \"{title}\" - {str(selftext)[:150]}...")
-                    
+                title     = post_data.get("title", "No Title")
+                subreddit = post_data.get("subreddit", "unknown")
+                selftext  = post_data.get("selftext", "")
+                snippets.append(
+                    f"• r/{subreddit}: \"{title}\" - {str(selftext)[:150]}..."
+                )
+
         tool_result = "\n".join(snippets) if snippets else "No relevant Reddit discussions found."
-        
+
+    except ImportError as e:
+        tool_result = f"scrapi_reddit unavailable: {e}"
     except Exception as e:
         tool_result = f"Failed to retrieve Reddit posts via scrapi_reddit: {str(e)}"
-    
+
     snippet = tool_result[:300]
-    
-    
 
     prompt = (
         f"You are the Chief Risk Officer reviewing this startup proposal.\n"
@@ -125,10 +121,10 @@ def risk_critique(idea: str, proposal: str, fast: bool = False) -> dict:
     raw    = call_ai(prompt, fast)
     result = _parse_critique(raw, "Risk")
     result.update({
-        "tool_name": "scrapireddit",
-        "tool_query": query,
+        "tool_name":           "scrapireddit",
+        "tool_query":          query,
         "tool_result_snippet": snippet,
-        "rag_used": True,
+        "rag_used":            True,
     })
     return result
 
@@ -182,30 +178,29 @@ def ceo_propose(idea: str, fast: bool = False) -> dict:
         "Output format: The prose proposal, followed by the structured markdown tables, followed by the JSON block."
     )
     content = call_ai(prompt, fast)
-    
+
     workforce_plan = []
-    timeline = []
-    json_match = re.search(r'```json\s*(\{.*?\})\s*```', content, re.DOTALL)
+    timeline       = []
+    json_match     = re.search(r'```json\s*(\{.*?\})\s*```', content, re.DOTALL)
     if json_match:
         try:
-            parsed = _json.loads(json_match.group(1))
+            parsed         = _json.loads(json_match.group(1))
             workforce_plan = parsed.get("workforce_plan", [])
-            timeline = parsed.get("timeline", [])
-            content = content[:json_match.start()] + content[json_match.end():]
+            timeline       = parsed.get("timeline", [])
+            content        = content[:json_match.start()] + content[json_match.end():]
         except Exception:
             pass
 
     return {
-        "agent": "CEO",
-        "tool_name": "Tavily Web Search + Salary API",
-        "tool_query": query,
+        "agent":               "CEO",
+        "tool_name":           "Tavily Web Search + Salary API",
+        "tool_query":          query,
         "tool_result_snippet": snippet,
-        "rag_used": True,
-        "content": content.strip(),
-        "workforce_plan": workforce_plan,
-        "timeline": timeline,
+        "rag_used":            True,
+        "content":             content.strip(),
+        "workforce_plan":      workforce_plan,
+        "timeline":            timeline,
     }
-
 
 
 # ── PHASE 2: Developer Critique ───────────────────────────────────────────────
@@ -227,8 +222,8 @@ def dev_critique(idea: str, proposal: str, fast: bool = False) -> dict:
     raw    = call_ai(prompt, fast)
     result = _parse_critique(raw, "Developer")
     result.update({
-        "tool_name": "GitHub Search API",
-        "tool_query": query,
+        "tool_name":           "GitHub Search API",
+        "tool_query":          query,
         "tool_result_snippet": snippet,
     })
     return result
@@ -242,7 +237,6 @@ def finance_critique(idea: str, proposal: str, fast: bool = False) -> dict:
     tool_result = get_google_trends.invoke(query)
     snippet     = tool_result[:300]
 
-    # Parse the structured JSON from the tool
     try:
         trends_data = json.loads(tool_result)
         chart_data  = trends_data.get("chart_data", [])
@@ -253,7 +247,7 @@ def finance_critique(idea: str, proposal: str, fast: bool = False) -> dict:
         )
     except Exception:
         chart_data = []
-        trend_text = tool_result  # fallback to raw string
+        trend_text = tool_result
 
     prompt = (
         f"You are the CFO reviewing this startup proposal for financial viability.\n"
@@ -274,7 +268,7 @@ def finance_critique(idea: str, proposal: str, fast: bool = False) -> dict:
         "tool_name":           "Google Trends (PyTrends)",
         "tool_query":          query,
         "tool_result_snippet": snippet,
-        "chart_data":          chart_data,   # ← NEW: passed to frontend
+        "chart_data":          chart_data,
     })
     return result
 
@@ -298,12 +292,11 @@ def marketing_critique(idea: str, proposal: str, fast: bool = False) -> dict:
     raw    = call_ai(prompt, fast)
     result = _parse_critique(raw, "Marketing")
     result.update({
-        "tool_name": "Tavily Competitor Intel",
-        "tool_query": query,
+        "tool_name":           "Tavily Competitor Intel",
+        "tool_query":          query,
         "tool_result_snippet": snippet,
     })
     return result
-
 
 
 # ── PHASE 2: Legal Critique (Grounded by Patents & Regulations) ──────────────
@@ -318,10 +311,10 @@ def legal_critique(idea: str, proposal: str, fast: bool = False) -> dict:
 
     # Step 2: Live Patent Search
     patent_query = f"patents related to {idea}"
-    patents = search_patents.invoke(patent_query)
-    
+    patents      = search_patents.invoke(patent_query)
+
     # Step 3: Regulatory Search
-    reg_query = f"regulations for {idea}"
+    reg_query   = f"regulations for {idea}"
     regulations = search_regulations.invoke(reg_query)
 
     snippet = (patents[:150] + " | " + regulations[:150])
@@ -343,14 +336,22 @@ def legal_critique(idea: str, proposal: str, fast: bool = False) -> dict:
         "... (at least 3 rows)\n"
     )
     raw = call_ai(prompt, fast)
-    
+
+    # ── FIX: parse score from LLM output and add required keys ───────────────
+    score_match = re.search(
+        r'Legal Risk Score:\s*(\d+(?:\.\d+)?)/10', raw, re.IGNORECASE
+    )
+    legal_score = float(score_match.group(1)) if score_match else 5.0
+
     return {
-        "agent": "Legal",
-        "tool_name": "Tavily Legal Search",
-        "tool_query": f"{patent_query} & {reg_query}",
+        "agent":               "Legal",
+        "tool_name":           "Tavily Legal Search",
+        "tool_query":          f"{patent_query} & {reg_query}",
         "tool_result_snippet": snippet,
-        "rag_used": True,
-        "content": raw,
+        "rag_used":            True,
+        "content":             raw,
+        "score":               legal_score,  # ← FIXED: was missing
+        "chart_data":          [],           # ← FIXED: was missing
     }
 
 
@@ -371,11 +372,11 @@ def ceo_revise(idea: str, prev_proposal: str, critiques: list,
     )
     content = call_ai(prompt, fast)
     return {
-        "agent": "CEO",
-        "tool_name": None,
-        "tool_query": None,
+        "agent":               "CEO",
+        "tool_name":           None,
+        "tool_query":          None,
         "tool_result_snippet": None,
-        "content": content,
+        "content":             content,
     }
 
 
@@ -412,36 +413,50 @@ Write 2-3 concrete, actionable sentences per section. Cite real data from agent 
 # ── DEPLOY: Generate Boilerplate Codebase ────────────────────────────────────
 
 def _extract_tech_table(tech_stack_text: str) -> str:
-    lines = tech_stack_text.strip().splitlines()
+    lines       = tech_stack_text.strip().splitlines()
     table_lines = [l for l in lines if '|' in l]
     if len(table_lines) >= 3:
         return "\n".join(table_lines)
-    
-    # Minimal fallback table
-    return "| Layer | Technology | Purpose | Cost |\n|---|---|---|---|\n| Backend | FastAPI | API Layer | Free |\n| Frontend | Next.js | Web UI | Free |"
+    return (
+        "| Layer | Technology | Purpose | Cost |\n"
+        "|---|---|---|---|\n"
+        "| Backend | FastAPI | API Layer | Free |\n"
+        "| Frontend | Next.js | Web UI | Free |"
+    )
 
 
 def generate_boilerplate(idea: str, plan: dict) -> dict:
     tech_stack_text = plan.get("Technology Stack", "")
     exec_summary    = plan.get("Executive Summary", "")
-    
-    tech_table = _extract_tech_table(tech_stack_text)
+
+    tech_table   = _extract_tech_table(tech_stack_text)
     project_name = "-".join(idea.lower().split()[:4])
     project_name = re.sub(r"[^a-z0-9\-]", "", project_name).strip("-")
 
     readme = f"# {idea}\n\n{exec_summary}\n\n## Tech Stack\n{tech_table}"
-    
-    docker_compose = "version: '3.9'\nservices:\n  api:\n    build: .\n    ports: ['8000:8000']"
-    
+
+    docker_compose = (
+        "version: '3.9'\n"
+        "services:\n"
+        "  api:\n"
+        "    build: .\n"
+        "    ports: ['8000:8000']"
+    )
+
     env_example = "HF_TOKEN=hf_...\nTAVILY_API_KEY=tvly-..."
-    
-    main_py = "from fastapi import FastAPI\napp = FastAPI()\n@app.get('/')\ndef root(): return {'status': 'ok'}"
-    
+
+    main_py = (
+        "from fastapi import FastAPI\n"
+        "app = FastAPI()\n"
+        "@app.get('/')\n"
+        "def root(): return {'status': 'ok'}"
+    )
+
     return {
-        "README.md": readme,
+        "README.md":          readme,
         "docker-compose.yml": docker_compose,
-        ".env.example": env_example,
-        "app/main.py": main_py,
+        ".env.example":       env_example,
+        "app/main.py":        main_py,
     }
 
 
