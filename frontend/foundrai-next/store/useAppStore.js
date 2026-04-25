@@ -44,6 +44,67 @@ const INIT = {
   redditPosts: [], // [{ subreddit, title, body_snippet, score_range }]
   pdfReady: false,
   deploymentUrl: "",
+
+  // new addeed
+  // Add to INIT:
+  sessionId: null,
+  isReplaying: false,
+
+  // Add to the store actions:
+  setSessionId: (id) => {
+    set({ sessionId: id });
+    // Persist to localStorage so refresh can replay
+    if (typeof window !== "undefined") {
+      localStorage.setItem("foundrai_session_id", id);
+    }
+  },
+
+  clearSession: () => {
+    set({ sessionId: null });
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("foundrai_session_id");
+    }
+  },
+
+  setReplaying: (v) => set({ isReplaying: v }),
+
+  // Update startSimulation to clear old session:
+  startSimulation: () => {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("foundrai_session_id");
+    }
+    set({
+      stage: "active",
+      sessionId: null,
+      isReplaying: false,
+      phase: 1,
+      livingDoc: {},
+      agentStates: {},
+      feed: [],
+      consensusScore: 0,
+      converged: false,
+      finalPlan: null,
+      planReady: false,
+      simulationDone: false,
+      pdfReady: false,
+      deploymentUrl: "",
+      legalFindings: null,
+      cfoChartData: null,
+      influencers: [],
+      workforcePlan: [],
+      timeline: [],
+      redditPosts: [],
+    });
+  },
+
+  // In INIT:
+  documentId: null,
+
+  // In actions:
+  setDocumentId: (id) => set({ documentId: id }),
+
+  // In startSimulation, add to the reset:
+  documentId: null,
 };
 
 export const useAppStore = create((set, get) => ({
@@ -71,6 +132,13 @@ export const useAppStore = create((set, get) => ({
     }
 
     switch (data.type) {
+      case "session_start":
+        get().setSessionId(data.session_id);
+        break;
+
+      case "replay_complete":
+        set({ isReplaying: false });
+        break;
       case "phase_change":
         set({ phase: data.phase });
         break;
