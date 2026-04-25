@@ -1,0 +1,12 @@
+# Labour Laws and Workforce Regulations
+
+## Employee vs. Contractor Misclassification
+One of the most common legal risks for early-stage startups is misclassifying employees as independent contractors (1099s). If a worker's hours, tools, and methods of work are controlled by the startup, they are legally an employee.
+Misclassification can lead to severe penalties, back taxes, and unpaid overtime claims.
+
+## Equity and Vesting
+All founders and early employees should be subject to a vesting schedule (typically 4 years with a 1-year cliff). If a founder leaves early without vesting, they shouldn't walk away with a large chunk of the company.
+Founders must file an 83(b) election within 30 days of receiving restricted stock to avoid massive tax liabilities later when the company's valuation increases.
+
+## International Labour and Remote Work
+Hiring remote workers internationally requires compliance with the worker's local labour laws. This often means using an Employer of Record (EOR) service like Deel or Remote.com to handle local payroll, taxes, and statutory benefits legally, rather than hiring them directly as foreign contractors indefinitely.

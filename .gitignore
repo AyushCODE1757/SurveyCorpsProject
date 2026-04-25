@@ -11,11 +11,6 @@ venv/
 env/
 .env/
 
-# Data
-chroma_data/
-backend/knowledge/
-tmp/
-
 # OS
 .DS_Store
 Thumbs.db
