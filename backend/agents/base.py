@@ -15,7 +15,7 @@ HF_TOKEN = os.getenv("HF_TOKEN", "")
 
 # Two-tier model strategy: compression uses fast/cheap, synthesis uses best.
 FAST_MODEL   = "Qwen/Qwen2.5-7B-Instruct"
-NORMAL_MODEL = "Qwen/Qwen2.5-72B-Instruct"
+NORMAL_MODEL = "Qwen/Qwen2.5-7B-Instruct"
 
 # Max tokens for a compressed agent summary passed to downstream agents.
 # Keeps the revision loop from ballooning.
