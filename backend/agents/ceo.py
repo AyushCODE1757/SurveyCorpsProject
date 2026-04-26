@@ -120,7 +120,7 @@ def ceo_propose(
 ) -> dict:
     # 1. Knowledge base RAG
     rag_context = query_for_idea(idea)
-
+    rag_context = rag_context[:800] if rag_context else ""
     # 2. Live market + salary tools
     query       = f"recent startups {idea} 2024 2025"
     tool_result = search_recent_startups.invoke(query)
