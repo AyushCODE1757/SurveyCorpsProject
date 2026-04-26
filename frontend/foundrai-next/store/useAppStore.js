@@ -9,6 +9,7 @@ const INIT = {
   // Input
   idea: "",
   fastMode: true,
+  documentId: null, // Moved here, defined once
   formData: {
     name: "",
     tagline: "",
@@ -33,78 +34,19 @@ const INIT = {
   converged: false,
   planReady: false,
   simulationDone: false,
-
-  // Results
-  finalPlan: null,
-  legalFindings: null, // { risk_score, findings: [{area, finding, severity, recommendation}] }
-  cfoChartData: null, // { revenue: [], burn: [], roi_multiple, breakeven_month }
-  influencers: [], // [{ name, platform, followers, engagement_rate, handle }]
-  workforcePlan: [], // [{ title, headcount, phase, monthly_cost }]
-  timeline: [], // [{ phase, months, deliverables }]
-  redditPosts: [], // [{ subreddit, title, body_snippet, score_range }]
-  pdfReady: false,
-  deploymentUrl: "",
-
-  // new addeed
-  // Add to INIT:
   sessionId: null,
   isReplaying: false,
 
-  // Add to the store actions:
-  setSessionId: (id) => {
-    set({ sessionId: id });
-    // Persist to localStorage so refresh can replay
-    if (typeof window !== "undefined") {
-      localStorage.setItem("foundrai_session_id", id);
-    }
-  },
-
-  clearSession: () => {
-    set({ sessionId: null });
-    if (typeof window !== "undefined") {
-      localStorage.removeItem("foundrai_session_id");
-    }
-  },
-
-  setReplaying: (v) => set({ isReplaying: v }),
-
-  // Update startSimulation to clear old session:
-  startSimulation: () => {
-    if (typeof window !== "undefined") {
-      localStorage.removeItem("foundrai_session_id");
-    }
-    set({
-      stage: "active",
-      sessionId: null,
-      isReplaying: false,
-      phase: 1,
-      livingDoc: {},
-      agentStates: {},
-      feed: [],
-      consensusScore: 0,
-      converged: false,
-      finalPlan: null,
-      planReady: false,
-      simulationDone: false,
-      pdfReady: false,
-      deploymentUrl: "",
-      legalFindings: null,
-      cfoChartData: null,
-      influencers: [],
-      workforcePlan: [],
-      timeline: [],
-      redditPosts: [],
-    });
-  },
-
-  // In INIT:
-  documentId: null,
-
-  // In actions:
-  setDocumentId: (id) => set({ documentId: id }),
-
-  // In startSimulation, add to the reset:
-  documentId: null,
+  // Results
+  finalPlan: null,
+  legalFindings: null, 
+  cfoChartData: null, 
+  influencers: [], 
+  workforcePlan: [], 
+  timeline: [], 
+  redditPosts: [], 
+  pdfReady: false,
+  deploymentUrl: "",
 };
 
 export const useAppStore = create((set, get) => ({
@@ -118,10 +60,25 @@ export const useAppStore = create((set, get) => ({
   setStage: (stage) => set({ stage }),
   goToResults: () => set({ stage: "results" }),
   reset: () => set({ ...INIT }),
+  setDocumentId: (id) => set({ documentId: id }),
+  setReplaying: (v) => set({ isReplaying: v }),
+
+  setSessionId: (id) => {
+    set({ sessionId: id });
+    if (typeof window !== "undefined") {
+      localStorage.setItem("foundrai_session_id", id);
+    }
+  },
+
+  clearSession: () => {
+    set({ sessionId: null });
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("foundrai_session_id");
+    }
+  },
 
   // ── SSE event handler ─────────────────────────────────────────────────────
   handleEvent: (data) => {
-    // Always push to persistent feed (except pings)
     if (data.type !== "ping") {
       set((s) => ({
         feed: [
@@ -139,6 +96,7 @@ export const useAppStore = create((set, get) => ({
       case "replay_complete":
         set({ isReplaying: false });
         break;
+        
       case "phase_change":
         set({ phase: data.phase });
         break;
@@ -187,6 +145,18 @@ export const useAppStore = create((set, get) => ({
           set((s) => ({
             livingDoc: { ...s.livingDoc, [sectionMap[agent]]: data.content },
           }));
+        }
+        
+        if (agent === "Finance" && data.chart_data?.length > 0) {
+          set({
+            cfoChartData: {
+              chart_data: data.chart_data,
+              trend: data.trend || "Unknown",
+              avg: data.avg || 0,
+              peak: data.peak || 0,
+              recent: data.recent || 0,
+            },
+          });
         }
         break;
       }
@@ -274,9 +244,14 @@ export const useAppStore = create((set, get) => ({
     }
   },
 
-  startSimulation: () =>
+  startSimulation: () => {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("foundrai_session_id");
+    }
     set({
       stage: "active",
+      sessionId: null,
+      isReplaying: false,
       phase: 1,
       livingDoc: {},
       agentStates: {},
@@ -294,7 +269,9 @@ export const useAppStore = create((set, get) => ({
       workforcePlan: [],
       timeline: [],
       redditPosts: [],
-    }),
+      documentId: null, // Reset doc ID on new simulation
+    });
+  },
 
   stopSimulation: () => set({ simulationDone: true }),
 }));
