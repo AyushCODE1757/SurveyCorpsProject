@@ -5,6 +5,7 @@ import { useAppStore } from "@/store/useAppStore";
 import PhaseBar from "./PhaseBar";
 import RoundTable from "./RoundTable";
 import LiveFeed from "./LiveFeed";
+import RedditFeed from "./RedditFeed";
 import LivingDocument from "./LivingDocument";
 
 export default function ActiveStage() {
@@ -67,9 +68,17 @@ export default function ActiveStage() {
           className="flex flex-col gap-4 flex-shrink-0 min-w-0"
           style={{ width: `calc(${100 - leftPct}% - 6px)` }}
         >
-          <div className="flex-1 glass rounded-2xl overflow-hidden min-h-0">
+          {/* Live feed occupies top ~40% of the right column */}
+          <div className="flex-none glass rounded-2xl overflow-hidden" style={{ height: "38%" }}>
             <LiveFeed />
           </div>
+
+          {/* Reddit Pain Point Feed — shows cards as they arrive from Risk Agent */}
+          <div className="flex-none glass rounded-2xl overflow-hidden" style={{ height: "28%" }}>
+            <RedditFeed />
+          </div>
+
+          {/* Living document fills remaining space */}
           <div className="flex-1 glass rounded-2xl overflow-hidden min-h-0">
             <LivingDocument />
           </div>

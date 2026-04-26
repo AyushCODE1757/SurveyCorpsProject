@@ -314,15 +314,37 @@ async def run_simulation_stream(
     for c in all_critiques:
         for event in _emit_tool_events(c, 2):
             yield event
-        yield await emit({
-            "type":        "critique" if c["agent"] != "Legal" else "legal_result",
-            "agent":       c["agent"],
-            "phase":       2,
-            "content":     c["content"],
-            "score":       c.get("score", 5.0),
-            "grounded_by": c.get("tool_name"),
-            "chart_data":  c.get("chart_data", []),
-        })
+
+        if c["agent"] == "Legal":
+            # Legal is a separate gate — emit as legal_result (no score in consensus)
+            yield await emit({
+                "type":        "legal_result",
+                "agent":       "Legal",
+                "phase":       2,
+                "content":     c["content"],
+                "grounded_by": c.get("tool_name"),
+                # No score — Legal is not a consensus participant
+            })
+        else:
+            yield await emit({
+                "type":        "critique",
+                "agent":       c["agent"],
+                "phase":       2,
+                "content":     c["content"],
+                "score":       c.get("score", 5.0),
+                "grounded_by": c.get("tool_name"),
+                "chart_data":  c.get("chart_data", []),
+            })
+
+        # ── Reddit result SSE event (Risk Agent only) ─────────────────────────
+        # Emits structured Reddit post cards for the RedditFeed component.
+        # Each post: { subreddit, title, body_snippet, score_range, relevance_tag }
+        if c["agent"] == "Risk" and c.get("reddit_posts"):
+            yield await emit({
+                "type":  "reddit_result",
+                "posts": c["reddit_posts"],
+                "phase": 2,
+            })
 
     avg_score = (
         sum(c["score"] for c in consensus_critiques) / len(consensus_critiques)
