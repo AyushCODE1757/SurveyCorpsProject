@@ -102,23 +102,6 @@ def _load_reddit_posts() -> list[dict]:
         posts.append({"subreddit": subreddit, "title": title, "body": body})
     return posts
 
-
-# @tool
-# def search_reddit_pain_points(keyword: str) -> str:
-#     posts = _load_reddit_posts()
-#     if not posts: return "[FALLBACK] Reddit demo file not found."
-#     keywords = keyword.lower().split()
-#     def score(post):
-#         text = (post["title"] + " " + post["body"]).lower()
-#         return sum(1 for kw in keywords if kw in text)
-#     ranked = sorted(posts, key=score, reverse=True)
-#     top    = [p for p in ranked if score(p) > 0][:5]
-#     if not top: top = ranked[:3]
-#     lines = []
-#     for p in top:
-#         snippet = p["body"][:180].replace("\n", " ") + "..."
-#         lines.append(f"• {p['subreddit']}: \"{p['title']}\" — {snippet}")
-#     return "\n".join(lines) if lines else "No results found."
 @tool
 def search_reddit_pain_points(keyword: str) -> str:
     """Search a curated database of Reddit posts to find common startup pain points and social proof."""
